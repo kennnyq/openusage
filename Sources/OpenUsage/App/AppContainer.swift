@@ -74,6 +74,7 @@ final class AppContainer {
         // The launch account pass: which account is signed in at each family's default home. Feeds
         // the snapshot cache's account stamp and reconciles the account registry.
         let accountAssembly = ProviderAccountAssembly.make(waitsForLoginShell: true)
+        UserDefaults.standard.set(false, forKey: CodexAccountsEditor.restartKey)
 
         let providers = ProviderCatalog.make(
             claudeCards: accountAssembly.claudeCards,

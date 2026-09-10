@@ -29,6 +29,20 @@ directories; each needs its own ChatGPT login stored in `auth.json`. The list re
 Codex credential discovery, including the global Keychain fallback. Include your usual home in the
 list if you want to keep monitoring it. With no list, the existing single-account behavior remains.
 
+### Add an Account in the App
+
+Open **Customize → Codex → Accounts** (or any Codex account's customization page). Click
+**Add Account…**, select the account's Codex home folder, then click **Restart OpenUsage**.
+The picker shows hidden folders such as `~/.codex`; use **⌘⇧G** to enter a folder path directly.
+
+When switching from automatic discovery, adding an account keeps the current file-backed login.
+The Accounts list lets you remove folders from monitoring without signing out or deleting their
+credentials. Removing every folder restores automatic discovery. Changes apply after restart.
+
+If the account does not yet have its own folder, expand **Need a Separate Login?** for Terminal
+commands, or follow the walkthrough below. Sign in first, then add that folder. Invalid or
+API-key-only logins show an error and leave the existing configuration untouched.
+
 Account cards show Session, Weekly, Spark, Spark Weekly, Extra Usage, and Rate Limit Resets. Local
 spend and trends are unavailable in this mode: existing Codex, pi, and OpenCode logs cannot reliably
 prove which account owns historical usage. They are also excluded from Total Spend and iCloud history.
@@ -48,7 +62,8 @@ Set `cli_auth_credentials_store = "file"` in each home's `config.toml` for subse
 using the matching `CODEX_HOME` when launching that account's CLI. Do not copy a rotating auth file
 between homes; sign in separately. OpenUsage updates tokens in their original files.
 
-Quit OpenUsage before changing its settings, then register the homes for the development build:
+You can now select these homes through **Add Account…**. As an alternative, quit OpenUsage and
+register them through Terminal for the development build:
 
 ```sh
 defaults write com.robinebers.openusage.dev openusage.codexAccountHomes.v1 -array \

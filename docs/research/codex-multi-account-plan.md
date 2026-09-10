@@ -5,8 +5,9 @@ Investigated and implemented September 10, 2026. The original design below recor
 [the provider documentation](../providers/codex.md#multiple-accounts-personal-build) is the current setup guide.
 
 The implementation includes explicit local homes, stable account cards, isolated refresh and reset
-claims, cache invalidation, CLI integration, and regression tests. Account-specific spend, an account
-management UI, and Keychain-only accounts remain deferred. Multi-account mode intentionally omits
+claims, cache invalidation, CLI integration, and regression tests. A follow-up adds an Accounts section
+to Codex customization, with a folder picker, removal controls, login instructions, and restart action.
+Account-specific spend and Keychain-only accounts remain deferred. Multi-account mode intentionally omits
 spend and trends. A failed refresh clears the affected account's cached values.
 
 Validation: the full suite passed (1,327 tests, 3 skipped), followed by 93 passing account/layout tests
@@ -14,6 +15,8 @@ including an additional credential-persistence regression. Live two-account veri
 requires signing in to the user's accounts; no credentials were created or copied for the tests.
 The implemented release build also completed and launched through `script/build_and_run.sh verify`
 using the installed full Xcode toolchain. It used ad-hoc signing; iCloud provisioning was unavailable.
+The account-configuration UI follow-up passed the full suite (1,333 tests, 3 skipped) and visual
+inspection of a render with two mock homes and the restart action.
 
 ## Feasibility and Scope
 
