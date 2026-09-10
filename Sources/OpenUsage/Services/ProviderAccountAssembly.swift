@@ -58,7 +58,8 @@ struct ProviderAccountAssembly {
         if !homes.isEmpty {
             assembly.usesExplicitCodexHomes = true
             assembly.codexCards = CodexAccountDiscovery.cards(
-                homes: homes, observer: DefaultAccountObserver(), store: accountsStore
+                homes: homes, observer: DefaultAccountObserver(), store: accountsStore,
+                names: CodexAccountNames.load(defaults: defaults)
             )
             for card in assembly.codexCards {
                 // An unresolved source must invalidate any previous cached identity too.

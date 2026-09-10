@@ -5,6 +5,8 @@ struct CodexAccountsSection: View {
     @State private var editor: CodexAccountsEditor
     @State private var isAdding = false
     @State private var actionError: String?
+    @State private var renamingHome: String?
+    @State private var draftName = ""
 
     init(editor: CodexAccountsEditor = CodexAccountsEditor()) {
         _editor = State(initialValue: editor)
@@ -26,7 +28,9 @@ struct CodexAccountsSection: View {
                 ForEach(editor.homes, id: \.self) { home in
                     HStack(alignment: .top, spacing: 8) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(URL(fileURLWithPath: home).lastPathComponent)
+                            Text(editor.namesByHome[home] ?? URL(fileURLWithPath: home).lastPathComponent)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
                             Text(home)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -35,11 +39,37 @@ struct CodexAccountsSection: View {
                                 .truncationMode(.middle)
                         }
                         Spacer(minLength: 4)
-                        Button("Remove") { editor.remove(home) }
+                        Button("Rename") {
+                            draftName = editor.namesByHome[home] ?? ""
+                            renamingHome = home
+                            actionError = nil
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(isAdding)
+                        Button("Remove") {
+                            editor.remove(home)
+                            if renamingHome == home { renamingHome = nil }
+                        }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
                             .disabled(isAdding)
                     }
+                }
+                if let home = renamingHome {
+                    TextField("Account Name", text: $draftName, prompt: Text("Primary"))
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { rename(home) }
+                    Text("Leave blank to use the folder name.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    HStack {
+                        Button("Save Name") { rename(home) }
+                            .disabled(isAdding)
+                        Button("Cancel") { renamingHome = nil }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
                 }
                 Button("Add Account…") { addAccount() }
                     .buttonStyle(.bordered)
@@ -84,7 +114,7 @@ struct CodexAccountsSection: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .cardSurface()
         }
-        .onAppear { editor.reload() }
+        .task { editor.reload(); await editor.refreshNames() }
     }
 
     private func addAccount() {
@@ -93,8 +123,21 @@ struct CodexAccountsSection: View {
         Task {
             defer { isAdding = false }
             guard let home = await CodexAccountPanel.chooseHome() else { return }
-            do { try await editor.add(home) }
+            do { try await editor.add(home); await editor.refreshNames() }
             catch { report(error) }
+        }
+    }
+
+    private func rename(_ home: String) {
+        guard !isAdding else { return }
+        isAdding = true
+        actionError = nil
+        Task {
+            defer { isAdding = false }
+            do {
+                try await editor.rename(home, to: draftName)
+                renamingHome = nil
+            } catch { report(error) }
         }
     }
 

@@ -39,6 +39,12 @@ When switching from automatic discovery, adding an account keeps the current fil
 The Accounts list lets you remove folders from monitoring without signing out or deleting their
 credentials. Removing every folder restores automatic discovery. Changes apply after restart.
 
+Click **Rename** beside a folder to give its card a name such as **Primary** or **Secondary**.
+Choose **Save Name**, then **Restart OpenUsage** to apply it. Names are saved against the account
+identity, so moving its folder keeps the name and signing another account into that folder does not
+inherit it. Leave the name blank to restore the directory name. Renaming preserves widget IDs,
+pins, and account data.
+
 If the account does not yet have its own folder, expand **Need a Separate Login?** for Terminal
 commands, or follow the walkthrough below. Sign in first, then add that folder. Invalid or
 API-key-only logins show an error and leave the existing configuration untouched.
@@ -70,8 +76,8 @@ defaults write com.robinebers.openusage.dev openusage.codexAccountHomes.v1 -arra
   "$HOME/.codex-personal" "$HOME/.codex-work"
 ```
 
-Restart OpenUsage after changing the list or replacing a home's account. The cards are named after
-their home directories. The same account in multiple homes produces one card. Previously observed
+Restart OpenUsage after changing the list or replacing a home's account. By default, the cards are named after
+their home directories; use Rename to choose another name. The same account in multiple homes produces one card. Previously observed
 accounts retain their IDs; additional accounts start unpinned. Other row defaults match the ordinary
 Codex card. Existing enablement and customization choices remain in effect.
 

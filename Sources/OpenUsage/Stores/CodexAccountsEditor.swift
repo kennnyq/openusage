@@ -8,6 +8,7 @@ final class CodexAccountsEditor {
     static let restartKey = "openusage.codexAccountsRestartRequired"
     private(set) var homes: [String]
     private(set) var needsRestart: Bool
+    private(set) var namesByHome: [String: String] = [:]
     private let defaults: UserDefaults
     private let authStore: CodexAuthStore
 
@@ -44,6 +45,38 @@ final class CodexAccountsEditor {
         var seen: Set<String> = []
         updated = updated.filter { seen.insert($0).inserted }
         save(updated)
+    }
+
+    func refreshNames() async {
+        let files = authStore.files
+        let selectedHomes = homes
+        let names = CodexAccountNames.load(defaults: defaults)
+        namesByHome = await loadOffMainActor {
+            var result: [String: String] = [:]
+            for home in selectedHomes {
+                do {
+                    let auth = try CodexAccountSession.readAuth(path: home + "/auth.json", files: files)
+                    if let identity = CodexAccountSession.identity(auth) { result[home] = names[identity] }
+                } catch {
+                    AppLog.warn(LogTag.auth("codex"), "account name unavailable: \(error.localizedDescription)")
+                }
+            }
+            return result
+        }
+    }
+
+    func rename(_ home: String, to name: String) async throws {
+        let files = authStore.files
+        let identity = try await loadOffMainActor {
+            let auth = try CodexAccountSession.readAuth(path: home + "/auth.json", files: files)
+            guard let identity = CodexAccountSession.identity(auth) else { throw CodexAccountError.missingIdentity }
+            return identity
+        }
+        try CodexAccountNames.save(name, identity: identity, defaults: defaults)
+        needsRestart = true
+        defaults.set(true, forKey: Self.restartKey)
+        await refreshNames()
+        AppLog.info(.config, "Codex account name updated; restart required")
     }
 
     func remove(_ home: String) {

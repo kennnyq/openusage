@@ -26,7 +26,8 @@ enum CodexAccountDiscovery {
     /// Explicit mode uses only selected files, never the service-wide Keychain fallback. Broken
     /// sources remain visible as error cards; persisted records are not evidence of a live login.
     static func cards(
-        homes: [String], observer: DefaultAccountObserver, store: ProviderAccountsStore
+        homes: [String], observer: DefaultAccountObserver, store: ProviderAccountsStore,
+        names: [String: String] = [:]
     ) -> [CodexAccountCard] {
         var sources: [(home: String, identity: String?)] = []
         var seen: Set<String> = []
@@ -72,7 +73,8 @@ enum CodexAccountDiscovery {
                 cardHomes = [source.home]
             }
             guard !cards.contains(where: { $0.id == id }) else { continue }
-            let name = source.home.hasPrefix("/") ? URL(fileURLWithPath: source.home).lastPathComponent : "Invalid Home"
+            let fallback = source.home.hasPrefix("/") ? URL(fileURLWithPath: source.home).lastPathComponent : "Invalid Home"
+            let name = source.identity.flatMap { names[$0] } ?? fallback
             cards.append(.init(id: id, identityKey: source.identity,
                                displayName: "Codex — \(name)", homes: cardHomes))
         }
