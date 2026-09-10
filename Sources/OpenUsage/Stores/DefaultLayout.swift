@@ -6,6 +6,19 @@ import Foundation
 /// define an ID (e.g. the test fixtures) silently ignore it. The provider-section order isn't seeded
 /// here: an empty saved order reconciles to plain registry order in `LayoutStore`.
 enum DefaultLayout {
+    /// Additional Codex cards inherit the existing rows and placement, but start unpinned.
+    /// Existing Claude account defaults are unchanged.
+    static func forAccountCards(_ metricIDs: [String], providerIDs: [String], pins: Bool = false) -> [String] {
+        metricIDs.flatMap { metricID in
+            let family = metricID.split(separator: ".").first.map(String.init) ?? ""
+            guard family == "claude" || (family == "codex" && !pins) else { return [metricID] }
+            let suffix = metricID.dropFirst(family.count)
+            return [metricID] + providerIDs.filter {
+                $0 != family && ProviderAccountID.family(of: $0) == family
+            }.map { "\($0)\(suffix)" }
+        }
+    }
+
     static let metricIDs: [String] = [
         "antigravity.geminiPro", "antigravity.geminiWeekly", "antigravity.claude", "antigravity.claudeWeekly",
         "antigravity.trend", "antigravity.today", "antigravity.yesterday", "antigravity.last30",

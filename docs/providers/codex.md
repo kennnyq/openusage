@@ -22,6 +22,71 @@ If Codex reports only a 7-day window, it maps to Weekly without inventing a 5-ho
 
 Sign in once with the Codex CLI (`codex`); OpenUsage reads the same auth files (`$CODEX_HOME` respected) with a keychain fallback. Tokens refresh automatically and rotate back into the auth file.
 
+## Multiple Accounts (Personal Build)
+
+This build can show several Codex subscription accounts at once. Configure an explicit list of home
+directories; each needs its own ChatGPT login stored in `auth.json`. The list replaces automatic
+Codex credential discovery, including the global Keychain fallback. Include your usual home in the
+list if you want to keep monitoring it. With no list, the existing single-account behavior remains.
+
+Account cards show Session, Weekly, Spark, Spark Weekly, Extra Usage, and Rate Limit Resets. Local
+spend and trends are unavailable in this mode: existing Codex, pi, and OpenCode logs cannot reliably
+prove which account owns historical usage. They are also excluded from Total Spend and iCloud history.
+
+### Set Up Separate Logins
+
+Run these commands yourself and select the intended account in each browser sign-in:
+
+```sh
+mkdir -p "$HOME/.codex-personal" "$HOME/.codex-work"
+chmod 700 "$HOME/.codex-personal" "$HOME/.codex-work"
+env CODEX_HOME="$HOME/.codex-personal" codex -c 'cli_auth_credentials_store="file"' login
+env CODEX_HOME="$HOME/.codex-work" codex -c 'cli_auth_credentials_store="file"' login
+```
+
+Set `cli_auth_credentials_store = "file"` in each home's `config.toml` for subsequent CLI use. Keep
+using the matching `CODEX_HOME` when launching that account's CLI. Do not copy a rotating auth file
+between homes; sign in separately. OpenUsage updates tokens in their original files.
+
+Quit OpenUsage before changing its settings, then register the homes for the development build:
+
+```sh
+defaults write com.robinebers.openusage.dev openusage.codexAccountHomes.v1 -array \
+  "$HOME/.codex-personal" "$HOME/.codex-work"
+```
+
+Restart OpenUsage after changing the list or replacing a home's account. The cards are named after
+their home directories. The same account in multiple homes produces one card. Previously observed
+accounts retain their IDs; additional accounts start unpinned. Other row defaults match the ordinary
+Codex card. Existing enablement and customization choices remain in effect.
+
+New cards with usable logins turn on automatically. Missing or broken logins remain listed in
+Customize; enable one to see its error, then sign in and restart. A failed account refresh clears
+that card's cached values without affecting another account. Reset credits are claimed only for the
+selected card, with its account name shown in the confirmation.
+
+To return to automatic single-account discovery, quit the app, delete the list, then restart:
+
+```sh
+defaults delete com.robinebers.openusage.dev openusage.codexAccountHomes.v1
+```
+
+The home list stays on this Mac and contains no tokens. A build using another bundle ID needs that
+ID in the `defaults` command. The bundled CLI reads the same settings as its parent app.
+
+### Build and Run
+
+From the repository root on this Mac:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer ./script/build_and_run.sh verify
+```
+
+This stops the previous process, builds and signs `dist/OpenUsage.app`, launches it, and checks that
+it is running. Look for its menu-bar icon. Use `CONFIG=debug` before the command for a debug build,
+or replace `verify` with `logs` to relaunch and stream logs. This Mac needs the full Xcode toolchain;
+the selected Command Line Tools lack a SwiftUI macro plugin required by a dependency.
+
 ## The spend tiles
 
 **Customize → Codex → Cost Estimates → Fallback Model** optionally estimates usage that has no known price. The default is **None**. Choose a public model to use its rates for those estimates; known model prices and recorded costs remain unchanged. The existing unknown-model warning and tooltip remain visible when a fallback is used. Switching the choice recalculates local history without changing the model Codex runs. See [model pricing](../pricing.md) for details.

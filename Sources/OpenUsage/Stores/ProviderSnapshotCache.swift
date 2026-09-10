@@ -128,6 +128,15 @@ struct ProviderSnapshotCache {
         save(payload)
     }
 
+    /// Remove an entry whose source can no longer be trusted for its account.
+    func remove(providerID: String) {
+        var payload = loadPayload()
+        payload.snapshots.removeValue(forKey: providerID)
+        payload.producedByIdentityKeys.removeValue(forKey: providerID)
+        sessionWrites.withLock { $0.remove(providerID) }
+        save(payload)
+    }
+
     /// The account identity stamped when this provider's entry was stored, or `nil` when the entry is
     /// absent or was written without one. Launch filtering compares this against the card's current
     /// identity before showing a cached snapshot for an account-aware card (see `WidgetDataStore.init`).

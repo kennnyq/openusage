@@ -15,6 +15,11 @@ The same detection runs for providers that arrive later. On the first launch aft
 
 This check happens **once per provider**. After that, the provider is yours to manage: if you turn it off, no update will ever turn it back on, and installing the tool later won't flip it on behind your back either — head to Customize when you want it.
 
+Explicit [Codex account homes](providers/codex.md#multiple-accounts-personal-build) create separate
+cards on restart. Each new card uses the same local credential check. A missing or broken login
+stays off until enabled in Customize; it never borrows another account's login. Previously known
+account cards keep their enablement choice even when their home or position in the list changes.
+
 ## Your choices always stick
 
 Everything you set in Customize — providers on or off, metric layout, menu-bar stars — carries across updates untouched. The only thing an update may ever change is turning **on** a provider you have never seen before, and only when you actually have that tool installed.

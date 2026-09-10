@@ -15,10 +15,12 @@ struct ClaudeAccountCard: Equatable, Sendable {
 /// swap is caught on the next launch.
 @MainActor
 struct ProviderAccountAssembly {
-    /// Card id → the account identity signed in there this launch. Phase 1 observes only default
-    /// homes, so the keys are the bare family ids; a family whose identity didn't resolve is absent.
-    let identityKeysByCard: [String: String]
+    /// Card ID → launch-resolved account identity. Explicit Codex sources that cannot identify
+    /// their login use an unresolved stamp so no previous successful cache can be trusted.
+    var identityKeysByCard: [String: String]
     var claudeCards: [ClaudeAccountCard] = []
+    var codexCards: [CodexAccountCard] = []
+    var usesExplicitCodexHomes = false
 
     /// `waitsForLoginShell`: true for the menu-bar app (a Finder/Dock launch inherits no shell
     /// exports, so the pass leans on the login-shell layers), false for the one-shot CLI (a terminal
@@ -46,11 +48,24 @@ struct ProviderAccountAssembly {
         if families.count < ProviderAccountID.families.count {
             AppLog.info(.config, "account identity read skipped for \(ProviderAccountID.families.subtracting(families).sorted().joined(separator: ", ")): login shell cold and no shell-environment snapshot exists yet")
         }
-        return make(
+        let accountsStore = ProviderAccountsStore(defaults: defaults)
+        let homes = CodexAccountHomes.load(defaults: defaults)
+        var assembly = make(
             observer: DefaultAccountObserver(),
-            accountsStore: ProviderAccountsStore(defaults: defaults),
-            families: families
+            accountsStore: accountsStore,
+            families: homes.isEmpty ? families : families.subtracting(["codex"])
         )
+        if !homes.isEmpty {
+            assembly.usesExplicitCodexHomes = true
+            assembly.codexCards = CodexAccountDiscovery.cards(
+                homes: homes, observer: DefaultAccountObserver(), store: accountsStore
+            )
+            for card in assembly.codexCards {
+                // An unresolved source must invalidate any previous cached identity too.
+                assembly.identityKeysByCard[card.id] = card.identityKey ?? "unresolved"
+            }
+        }
+        return assembly
     }
 
     /// The environment variable that relocates each family's default home — the fact whose

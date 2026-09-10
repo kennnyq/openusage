@@ -30,6 +30,7 @@ final class CodexResetClaimService {
     private let usageClient: CodexUsageClient
     private let credentialCandidates: () async -> [Credentials]
     private let refreshAfterClaim: () async -> Void
+    private let validateCredentials: () async -> Bool
     /// The credit id each idempotency key was matched to, kept for the key's retries: if a consume
     /// succeeded but its response was lost, the credit is gone from a re-fetched list — a fresh match
     /// would misread the retry as "no longer available" instead of replaying the POST and letting the
@@ -41,11 +42,13 @@ final class CodexResetClaimService {
     init(
         usageClient: CodexUsageClient,
         credentialCandidates: @escaping () async -> [Credentials],
-        refreshAfterClaim: @escaping () async -> Void = {}
+        refreshAfterClaim: @escaping () async -> Void = {},
+        validateCredentials: @escaping () async -> Bool = { true }
     ) {
         self.usageClient = usageClient
         self.credentialCandidates = credentialCandidates
         self.refreshAfterClaim = refreshAfterClaim
+        self.validateCredentials = validateCredentials
     }
 
     /// Production wiring: shares the Codex provider's auth store and usage client, so credential
@@ -74,6 +77,34 @@ final class CodexResetClaimService {
                 }
             },
             refreshAfterClaim: refreshAfterClaim
+        )
+    }
+
+    /// Account mode shares token rotation with the exact card. It supplies only one identity.
+    convenience init(session: CodexAccountSession, refreshAfterClaim: @escaping () async -> Void) {
+        self.init(
+            usageClient: session.client,
+            credentialCandidates: {
+                do {
+                    let state = try await session.credentials()
+                    try session.validate(state)
+                    return [(state.auth.tokens!.accessToken!, session.card.identityKey)]
+                } catch {
+                    AppLog.error(LogTag.auth(session.card.id), "reset credentials unavailable: \(error.localizedDescription)")
+                    return []
+                }
+            },
+            refreshAfterClaim: refreshAfterClaim,
+            validateCredentials: {
+                do {
+                    let state = try await session.load()
+                    try session.validate(state)
+                    return true
+                } catch {
+                    AppLog.error(LogTag.auth(session.card.id), "reset cancelled: \(error.localizedDescription)")
+                    return false
+                }
+            }
         )
     }
 
@@ -115,6 +146,7 @@ final class CodexResetClaimService {
             }
         }
 
+        guard await validateCredentials() else { return .failed }
         let outcome = await consume(
             creditID: creditID, redeemRequestID: redeemRequestID, candidates: preferredCandidates
         )
@@ -246,14 +278,13 @@ final class CodexResetClaimService {
     }
 }
 
-/// Hands the claim service to the resets popover through the environment: `nil` (the default — previews,
-/// share-card renders, reorder previews) renders the timeline read-only with no "Use" affordance.
+/// Card-indexed services. An empty environment (previews/share renders) is read-only.
 private struct CodexResetClaimServiceKey: EnvironmentKey {
-    static let defaultValue: CodexResetClaimService? = nil
+    static let defaultValue: [String: CodexResetClaimService] = [:]
 }
 
 extension EnvironmentValues {
-    var codexResetClaim: CodexResetClaimService? {
+    var codexResetClaims: [String: CodexResetClaimService] {
         get { self[CodexResetClaimServiceKey.self] }
         set { self[CodexResetClaimServiceKey.self] = newValue }
     }

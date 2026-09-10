@@ -33,8 +33,14 @@ struct CustomizeProviderDetailView: View {
                 if let keyProvider = container.apiKeyProviders.first(where: { $0.provider.id == providerID }) {
                     APIKeysSection(provider: keyProvider)
                 }
-                if providerID == "codex" {
-                    CodexPricingSection()
+                if ProviderAccountID.family(of: providerID) == "codex" {
+                    if container.isCodexAccountCard(providerID) {
+                        Text("Account cards show subscription limits. Local spend is unavailable because shared logs cannot reliably identify an account.")
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        CodexPricingSection()
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

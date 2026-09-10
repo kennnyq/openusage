@@ -29,7 +29,7 @@ struct WidgetRowView: View {
     @State private var modelHover = HoverPopoverState()
     /// Backs the resets popover's claim flow; `nil` outside the live dashboard (previews, share
     /// renders), which renders the timeline read-only.
-    @Environment(\.codexResetClaim) private var codexResetClaim
+    @Environment(\.codexResetClaims) private var codexResetClaims
     /// Party easter egg: fill meter bars with the party gradient instead of the severity color. Off by
     /// default everywhere else.
     @Environment(\.popoverPartyMode) private var partyMode
@@ -372,12 +372,12 @@ struct WidgetRowView: View {
                 } else if data.showsResetExpiries {
                     RateLimitResetsDetail(
                         count: data.resetCreditCount, expiries: data.expiriesAt,
+                        accountName: data.resetAccountName,
                         onHoverChange: { inside in modelHover.detailHover(inside) },
                         onPinChange: { pinned in modelHover.setPinned(pinned) },
-                        // Rows with reset expiries are Codex-only today, so the Codex claim service is
-                        // the right backing; absent from the environment (previews, share renders) the
-                        // timeline is read-only.
-                        claim: codexResetClaim.map { service in
+                        // Resolve by the descriptor's card ID, never by the first Codex provider.
+                        // Previews and share renders have no services and remain read-only.
+                        claim: codexResetClaims[data.resetAccountID ?? ""].map { service in
                             { expiry, redeemRequestID in
                                 await service.claim(creditExpiringAt: expiry, redeemRequestID: redeemRequestID)
                             }

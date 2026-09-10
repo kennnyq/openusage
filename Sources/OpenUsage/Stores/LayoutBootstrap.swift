@@ -37,7 +37,12 @@ enum LayoutBootstrap {
     ) -> LayoutInitialState {
         let hasStoredLayout = persistence.hasStoredLayout
         let savedPlaced = persistence.loadPlaced()?.filter { registry.descriptor(id: $0.descriptorID) != nil }
-        let startingPlaced = savedPlaced ?? defaults.metricIDs
+        // A user who never reordered rows may have seed markers but no saved placement. Start
+        // from the previously offered defaults so new account rows pass through normal seeding
+        // (including their On Demand placement), rather than looking like already placed rows.
+        let priorSeeds = persistence.loadSeededDefaults().map(Set.init)
+        let startingDefaults = defaults.metricIDs.filter { priorSeeds?.contains($0) ?? true }
+        let startingPlaced = savedPlaced ?? startingDefaults
             .filter { registry.descriptor(id: $0) != nil }
             .map { PlacedWidget(descriptorID: $0) }
         let seededResult = seedNewDefaultMetrics(

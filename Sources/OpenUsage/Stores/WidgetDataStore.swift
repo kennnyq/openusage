@@ -337,6 +337,13 @@ final class WidgetDataStore {
             )
         }
         if let message = Self.errorMessage(in: snapshot) {
+            // Explicit Codex accounts fail closed: a replaced/unreadable credential source must
+            // not leave a last-good account's values on screen or available to CLI cache reads.
+            if let codex = provider as? CodexProvider, codex.accountSession != nil {
+                localSnapshots.removeValue(forKey: providerID)
+                cache.remove(providerID: providerID)
+                rebuildRenderedSnapshots()
+            }
             // Failed refresh: surface the error but keep the last good snapshot on screen rather than
             // collapsing every row to "No data". The provider error string is already user-safe.
             providerErrors[providerID] = message

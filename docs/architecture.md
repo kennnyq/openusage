@@ -1,5 +1,12 @@
 # Architecture
 
+The personal build also supports explicitly configured Codex account homes. Launch-time discovery
+groups homes by account identity and reuses the account registry's stable card IDs. Each card has
+its own usage runtime and reset service, sharing one token-refresh coordinator. Account changes
+invalidate the affected card's cached data. These cards expose subscription limits only; shared
+local spend history is excluded because its account ownership cannot be established. See
+[Codex account setup](providers/codex.md#multiple-accounts-personal-build).
+
 A high-level map of how OpenUsage is put together, for people working on the code. For what the app
 *does*, start with the [behavior docs](README.md).
 

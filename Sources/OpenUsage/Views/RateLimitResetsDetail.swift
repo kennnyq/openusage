@@ -20,6 +20,7 @@ struct RateLimitResetsDetail: View {
     /// no credits (empty state); > 0 → credits we have but whose expiry times weren't fetched.
     let count: Int
     let expiries: [Date]
+    var accountName: String? = nil
     /// Reports whether the cursor is inside the popover, so the trigger keeps it open while the cursor
     /// travels from the inline value into the popover, and closes once it leaves both.
     var onHoverChange: (Bool) -> Void
@@ -293,7 +294,7 @@ struct RateLimitResetsDetail: View {
     /// the claim stays inside the popover.
     private func confirmRow(_ entry: Entry) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Use this reset?")
+            Text(accountName.map { "Use This Reset for \($0)?" } ?? "Use This Reset?")
                 .font(.system(size: density.supportingPointSize, weight: .medium))
                 .foregroundStyle(.primary)
             Text("Immediately reset your usage limits. This can't be undone.")

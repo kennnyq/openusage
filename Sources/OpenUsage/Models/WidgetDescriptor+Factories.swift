@@ -80,6 +80,8 @@ extension WidgetDescriptor {
         sample.isUsagePeriod = isUsagePeriod
         sample.traySuffix = traySuffix
         sample.showsResetExpiries = showsResetExpiries
+        sample.resetAccountID = showsResetExpiries ? provider.id : nil
+        sample.resetAccountName = showsResetExpiries ? provider.displayName : nil
         return make(id: id, provider: provider, metricLabel: metricLabel ?? title, sample: sample)
     }
 
