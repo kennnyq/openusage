@@ -67,6 +67,21 @@ final class CodexHomeDiscoveryTests: XCTestCase {
         XCTAssertEqual(logins.map(\.identity.key), ["acct-a|a@test", "acct-b|b@test"])
     }
 
+    func testUnderscoreHomesDiscoverSeparateAccountsWithoutMatchingUnrelatedFolders() {
+        let files = FakeFiles([
+            "/Users/dev/.codex/auth.json": Fixtures.codexAuth(accountID: "PRIMARY", email: "primary@test"),
+            "/Users/dev/.codex_secondary/auth.json": Fixtures.codexAuth(accountID: "SECONDARY", email: "secondary@test"),
+            "/Users/dev/.config/codex_ci/auth.json": Fixtures.codexAuth(accountID: "CI", email: "ci@test"),
+            "/Users/dev/.codexbackup/auth.json": Fixtures.codexAuth(accountID: "BACKUP", email: "backup@test"),
+        ])
+        let logins = scanner(files: files, directories: [
+            "/Users/dev": [".codex_secondary", ".codexbackup"],
+            "/Users/dev/.config": ["codex_ci"],
+        ]).logins()
+
+        XCTAssertEqual(logins.map(\.identity.key), ["primary|primary@test", "secondary|secondary@test", "ci|ci@test"])
+    }
+
     func testIdentityFallsBackFromIncompleteIDTokenToAccessToken() throws {
         let auth = try XCTUnwrap(CodexAuthStore.parseAuth(Fixtures.codexAuth(
             accountID: nil, email: "ME@WORK.TEST", accessAccountID: "ACCT-WORK"

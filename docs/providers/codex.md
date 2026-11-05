@@ -53,8 +53,8 @@ Upgrading from a version without Swap support refreshes saved shell settings bef
 ### Other Codex homes and pi logins
 
 OpenUsage also finds signed-in accounts in `CODEX_HOME`, `~/.codex`, `~/.config/codex`, sibling
-`~/.codex-*` folders, sibling `~/.config/codex-*` folders, and pi's `auth.json` (`openai-codex`,
-`openai-codex-2`, …). Logins are matched by ChatGPT workspace and email, so two users in the same
+`~/.codex-*` or `~/.codex_*` folders, sibling `~/.config/codex-*` or `~/.config/codex_*` folders,
+and pi's `auth.json` (`openai-codex`, `openai-codex-2`, …). Logins are matched by ChatGPT workspace and email, so two users in the same
 workspace remain separate cards, and the same account signed in through several homes and pi shares
 one card, named by its xswap alias, then its pi label, then its workspace and email. A login held only
 in the Keychain counts as an account too. A single account keeps the plain Codex card, which still

@@ -13,8 +13,8 @@ struct CodexHomeScan: Equatable, Sendable {
 }
 
 /// Finds the Codex homes on this Mac — the configured default (`CODEX_HOME`, else `~/.config/codex`
-/// and `~/.codex`) plus sibling `~/.codex-*` and `~/.config/codex-*` folders — and reads which
-/// account is signed in at each. Read-only.
+/// and `~/.codex`) plus sibling homes with a hyphen or underscore suffix (`~/.codex-*`,
+/// `~/.codex_*`, `~/.config/codex-*`, `~/.config/codex_*`) — and reads the signed-in account. Read-only.
 struct CodexHomeScanner: Sendable {
     var environment: EnvironmentReading
     var files: TextFileAccessing
@@ -64,11 +64,11 @@ struct CodexHomeScanner: Sendable {
     func candidateHomes() -> [String] {
         let home = homeDirectory()
         let siblingHomes = listDirectories(home.path)
-            .filter { $0.hasPrefix(".codex-") }
+            .filter { $0.hasPrefix(".codex-") || $0.hasPrefix(".codex_") }
             .sorted()
             .map { "~/\($0)" }
             + listDirectories(home.appendingPathComponent(".config").path)
-            .filter { $0.hasPrefix("codex-") }
+            .filter { $0.hasPrefix("codex-") || $0.hasPrefix("codex_") }
             .sorted()
             .map { "~/.config/\($0)" }
         return Self.uniqueHomes(
