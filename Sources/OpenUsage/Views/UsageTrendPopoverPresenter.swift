@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 
 extension View {
-    /// SwiftUI does not expose the backing `NSPopover.animates` flag, so reduced motion crosses the
-    /// AppKit boundary only for presentation. The normal path stays on SwiftUI's standard popover.
+    /// Use the AppKit presenter in both motion modes. SwiftUI's standard popover can retain the
+    /// parent panel's old rendered size during navigation, making its visible surface jump downward.
     func motionAwareHoverPopover<PopoverContent: View>(
         isPresented: Binding<Bool>,
         reduceAnimations: Bool,
@@ -24,16 +24,12 @@ private struct MotionAwareHoverPopoverModifier<PopoverContent: View>: ViewModifi
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if reduceAnimations {
-            content.background {
-                ReducedMotionPopoverPresenter(
-                    isPresented: $isPresented,
-                    reduceAnimations: reduceAnimations,
-                    popoverContent: popoverContent
-                )
-            }
-        } else {
-            content.popover(isPresented: $isPresented, arrowEdge: .top, content: popoverContent)
+        content.background {
+            ReducedMotionPopoverPresenter(
+                isPresented: $isPresented,
+                reduceAnimations: reduceAnimations,
+                popoverContent: popoverContent
+            )
         }
     }
 }
@@ -97,6 +93,7 @@ final class ReducedMotionPopoverController: NSObject, NSPopoverDelegate {
 
     private let host = NSHostingController(rootView: AnyView(EmptyView()))
     private var ignoreNextClose = false
+    private var preferredEdge: NSRectEdge = .minY
 
     init(isPresented: Binding<Bool>) {
         self.isPresented = isPresented
@@ -110,6 +107,8 @@ final class ReducedMotionPopoverController: NSObject, NSPopoverDelegate {
     }
 
     func update(content: AnyView, reduceAnimations: Bool, anchor: NSView) {
+        preferredEdge = reduceAnimations ? .minY : .maxY
+        popover.animates = !reduceAnimations
         host.rootView = AnyView(content.animationReduction(reduceAnimations))
         guard isPresented.wrappedValue else {
             synchronize(with: anchor)
@@ -137,7 +136,7 @@ final class ReducedMotionPopoverController: NSObject, NSPopoverDelegate {
             return
         }
         guard anchor.window != nil, !popover.isShown else { return }
-        popover.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: .minY)
+        popover.show(relativeTo: anchor.bounds, of: anchor, preferredEdge: preferredEdge)
     }
 
     func dismissWithoutUpdatingBinding() {

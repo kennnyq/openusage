@@ -34,6 +34,20 @@ final class UsageTrendPopoverTests: XCTestCase {
         XCTAssertEqual(controller.popover.contentSize, originalSize)
     }
 
+    func testPresenterTracksMotionPreferenceChanges() {
+        let controller = ReducedMotionPopoverController(isPresented: .constant(false))
+        let anchor = NSView()
+
+        controller.update(content: AnyView(Text("Detail")), reduceAnimations: false, anchor: anchor)
+        XCTAssertTrue(controller.popover.animates)
+
+        controller.update(content: AnyView(Text("Detail")), reduceAnimations: true, anchor: anchor)
+        XCTAssertFalse(controller.popover.animates)
+
+        controller.update(content: AnyView(Text("Detail")), reduceAnimations: false, anchor: anchor)
+        XCTAssertTrue(controller.popover.animates)
+    }
+
     func testDismissAllClosesPresentedPopoverImmediately() {
         var isPresented = true
         let controller = ReducedMotionPopoverController(isPresented: Binding(

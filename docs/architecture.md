@@ -97,6 +97,9 @@ The panel's top edge and every resize step land on whole points, so the panel st
 menu bar while its height animates. Settings stays mounted after its first visit so returning to it
 reuses its native controls.
 
+Hover details use one AppKit popover presenter for both motion settings. SwiftUI owns whether the
+popup is open; the presenter handles its lifecycle and honors Reduce Animations during navigation.
+
 ## Platform support
 
 OpenUsage runs on macOS 15 (Sequoia) and later. It is built against the latest SDK and back-deploys:
